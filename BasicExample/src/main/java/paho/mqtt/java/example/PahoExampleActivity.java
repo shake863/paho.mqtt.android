@@ -20,10 +20,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
+import org.eclipse.paho.android.service.MqttTraceHandler;
 import org.eclipse.paho.client.mqttv3.DisconnectedBufferOptions;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -36,9 +38,9 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import java.util.ArrayList;
 
 public class PahoExampleActivity extends AppCompatActivity {
-    final String serverUri = "tcp://iot.eclipse.org:1883";
-    final String subscriptionTopic = "exampleAndroidTopic";
-    final String publishTopic = "exampleAndroidPublishTopic";
+    final String serverUri = "ws://10.210.136.100:9091";
+    final String subscriptionTopic = "test_zhiyuan15";
+    final String publishTopic = "test_zhiyuan15";
     final String publishMessage = "Hello World!";
     MqttAndroidClient mqttAndroidClient;
     String clientId = "ExampleAndroidClient";
@@ -70,6 +72,26 @@ public class PahoExampleActivity extends AppCompatActivity {
         clientId = clientId + System.currentTimeMillis();
 
         mqttAndroidClient = new MqttAndroidClient(getApplicationContext(), serverUri, clientId);
+        mqttAndroidClient.setTraceEnabled(true);
+        mqttAndroidClient.setTraceCallback(new MqttTraceHandler() {
+            @Override
+            public void traceDebug(String tag, String message) {
+
+                addToHistory("traceDebug:"+tag+":"+message);
+            }
+
+            @Override
+            public void traceError(String tag, String message) {
+
+                addToHistory("traceError:"+tag+":"+message);
+            }
+
+            @Override
+            public void traceException(String tag, String message, Exception e) {
+
+                addToHistory("traceException:"+tag+":"+message);
+            }
+        });
         mqttAndroidClient.setCallback(new MqttCallbackExtended() {
             @Override
             public void connectComplete(boolean reconnect, String serverURI) {
@@ -104,7 +126,7 @@ public class PahoExampleActivity extends AppCompatActivity {
         mqttConnectOptions.setCleanSession(false);
 
         //addToHistory("Connecting to " + serverUri);
-        mqttAndroidClient.connect(mqttConnectOptions, null, new IMqttActionListener() {
+        mqttAndroidClient.connect(mqttConnectOptions, this.getApplicationContext(), new IMqttActionListener() {
             @Override
             public void onSuccess(IMqttToken asyncActionToken) {
                 DisconnectedBufferOptions disconnectedBufferOptions = new DisconnectedBufferOptions();
@@ -124,7 +146,8 @@ public class PahoExampleActivity extends AppCompatActivity {
     }
 
     private void addToHistory(String mainText) {
-        System.out.println("LOG: " + mainText);
+        //System.out.println("LOG: " + mainText);
+        Log.d("<adan>", mainText);
         mAdapter.add(mainText);
         Snackbar.make(findViewById(android.R.id.content), mainText, Snackbar.LENGTH_LONG).setAction("Action", null).show();
 
@@ -151,12 +174,13 @@ public class PahoExampleActivity extends AppCompatActivity {
         });
 
         // THIS DOES NOT WORK!
-        mqttAndroidClient.subscribe(subscriptionTopic, 0, new IMqttMessageListener() {
-            @Override
-            public void messageArrived(String topic, MqttMessage message) throws Exception {
-                System.out.println("Message arrived: " + topic + " : " + new String(message.getPayload()));
-            }
-        });
+//        mqttAndroidClient.subscribe(subscriptionTopic, 0, new IMqttMessageListener() {
+//            @Override
+//            public void messageArrived(String topic, MqttMessage message) throws Exception {
+//
+//                Log.d("<adan>", "Message arrived: " + topic + " : " + new String(message.getPayload()));
+//            }
+//        });
     }
 
     public void publishMessage() {
